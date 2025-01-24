@@ -13,13 +13,8 @@ class Process_excel(object):
 
         inSize = 12
         outSize = 1
-        batchSize = 100
         u = np.zeros((inSize, len(t)))
         y = np.zeros((outSize, len(t)))
-        u_tdm = np.zeros((1, inSize, batchSize))
-        y_tdm = np.zeros((1, 1))
-        u_next = np.zeros((1, inSize, batchSize))
-        y_next = np.zeros((1, 1))
 
         for i, row in enumerate(excel_data.values):
             u[0, i] = row[1]
@@ -37,26 +32,48 @@ class Process_excel(object):
 
             y[0, i] = row[14]
 
+        return u, y
+
+    def preprocess(self, u, y):
+        u1 = np.zeros(u.shape)
+        y1 = np.zeros(y.shape)
+        u1 = np.where(u < 1000000, u, 1000000)
+        u1 = np.log10(u1) - 4.5
+
+        y1 = y
+
+        return u1, y1
+
+    def collect(self, u, y, delay):
+        inSize = 12
+        outSize = 1
+        batchSize = 100
+        u_tdm = np.zeros((1, inSize, batchSize))
+        y_tdm = np.zeros((outSize, 1))
+        u_next = np.zeros((1, inSize, batchSize))
+        y_next = np.zeros((outSize, 1))
+
         first_response_flag = True
         first_batch_flag = True
         list_of_start = []
         loop_cnt = 0
-        for i in range(int(len(t))):
+        batchSize = 100
+        for i in range(int(len(u[0, :]))):
             if i == 0:
                 pre_val = u[4, i]
                 continue
             val = u[4, i]
 
-            if val < 70000 and pre_val > 70000:
+            if val < 0.5 and pre_val > 0.5:
                 if first_response_flag is True:
                     list_of_start.append(i)
                     first_response_flag = False
-                    batch_start = i - 5
-                    batch_end = batch_start + batchSize
-                    if first_batch_flag is True:
-                        u_tdm[0, :, :] = u[:, batch_start:batch_end]
-                        y_tdm[0, 0] = y[0, batch_start]
-                        first_batch_flag = False
+                    # batch_start = i - 5
+                    # batch_end = batch_start + batchSize
+                    # if first_batch_flag is True:
+                    #     u_tdm[0, :, :] = u[:, batch_start:batch_end]
+                    #     y_tdm[0, 0] = y[0, batch_start]
+                    #     first_batch_flag = False
 
                 elif i - list_of_start[-1] > 70:
                     loop_cnt += 1
@@ -65,15 +82,15 @@ class Process_excel(object):
                     batch_end = batch_start + batchSize
                     if first_batch_flag is True:
                         u_tdm[0, :, :] = u[:, batch_start:batch_end]
-                        y_tdm[0, 0] = y[0, batch_start]
+                        y_tdm[0, 0] = y[0, batch_start - delay]
                         first_batch_flag = False
-                    elif batch_end >= len(t):
+                    elif batch_end >= int(len(u[0, :])):
                         break
                     elif loop_cnt == 130:
                         break
                     else:
                         u_next[0, :, :] = u[:, batch_start:batch_end]
-                        y_next[0, 0] = y[0, batch_start]
+                        y_next[0, 0] = y[0, batch_start - delay]
                         u_tdm = np.vstack((u_tdm, u_next))
                         y_tdm = np.hstack((y_tdm, y_next))
                 else:
@@ -83,39 +100,30 @@ class Process_excel(object):
 
         return u_tdm, y_tdm
 
-    def preprocess(self, u, y, delay):
-        u1 = np.zeros(u.shape)
-        y1 = np.zeros(y.shape)
-        u1 = np.where(u < 1000000, u, 1000000)
-        u1 = np.log10(u1) - 4.5
-
-        y1[0, :delay] = 0
-        y1[0, delay:] = y[0, :y.shape[1] - delay]
-
-        return u1, y1
-
     def combine_data(self, dir_name, delay):
         for i in [1, 3, 5]:
             excel_file = dir_name + "sensor_voltage_2025january16_{0}_column2.xlsx".format(i)
             excel_data = pd.read_excel(excel_file)
-            u_tdm, y_tdm = self.process_excel_files(excel_data)
+            u, y = self.process_excel_files(excel_data)
+            u1, y1 = self.preprocess(u, y)
             if i == 1:
-                u_train, y_train = self.preprocess(u_tdm, y_tdm, delay)
+                u_train, y_train = self.collect(u1, y1, delay)
             else:
-                u1, y1 = self.preprocess(u_tdm, y_tdm, delay)
-                u_train = np.vstack((u_train, u1))
-                y_train = np.hstack((y_train, y1))
+                u_next, y_next = self.collect(u1, y1, delay)
+                u_train = np.vstack((u_train, u_next))
+                y_train = np.hstack((y_train, y_next))
 
-        for i in [10]:
+        for i in [2, 4, 6]:
             excel_file = dir_name + "sensor_voltage_2025january16_{0}_column2.xlsx".format(i)
             excel_data = pd.read_excel(excel_file)
-            u_tdm, y_tdm = self.process_excel_files(excel_data)
-            if i == 10:
-                u_test, y_test = self.preprocess(u_tdm, y_tdm, delay)
+            u, y = self.process_excel_files(excel_data)
+            u1, y1 = self.preprocess(u, y)
+            if i == 8:
+                u_test, y_test = self.collect(u1, y1, delay)
             else:
-                u1, y1 = self.preprocess(u_tdm, y_tdm, delay)
-                u_test = np.vstack((u_test, u1))
-                y_test = np.hstack((y_test, y1))
+                u_next, y_next = self.collect(u1, y1, delay)
+                u_test = np.vstack((u_test, u_next))
+                y_test = np.hstack((y_test, y_next))
 
         return u_train, y_train, u_test, y_test
 
@@ -135,7 +143,6 @@ class Physical_reservoir(Process_excel):
         for t in range(trainLen):
             u_current = self.u1_train[t, :, :].reshape((self.channelSize * self.batchSize))
             X[:, t] = u_current
-
 
         # Ridge Regression
         reg = 1e-4
@@ -181,7 +188,7 @@ class Physical_reservoir(Process_excel):
         #グラフを描画するsubplot領域を作成。
         ax1 = fig1.add_subplot(1, 1, 1)
         #各subplot領域にデータを渡す
-        # ax1.plot(y_true1[:], color=c1, label=l1)
+        ax1.plot(y_true1[:], color=c1, label=l1)
         #各subplot領域にデータを渡す
         ax1.plot(y_pred1[:], color=c2, label=l2)
         #各subplotにxラベルを追加
@@ -250,7 +257,7 @@ class Physical_reservoir(Process_excel):
 
 dir_name = "/home/a24nitta/work/measurements/data/data_2025january16/"
 
-test = Physical_reservoir(dir_name, delay=0)
+test = Physical_reservoir(dir_name, delay=30)
 Wout = test.train()
 test.test(Wout)
 

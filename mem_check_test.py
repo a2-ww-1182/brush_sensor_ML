@@ -159,11 +159,11 @@ class Physical_reservoir(Process_excel):  # 機械学習するクラス
         return result_values
 
     def determination_coefficient(self):
-        covariance_y = np.cov(self.y_true[0, :], self.y_pred[:])
-        variance_input = np.var(self.y_without_delay[0, :])
-        variance_model = np.var(self.y_pred[:])
+        upper = np.sum(np.square(self.y_true[0, :] - self.y_pred[:]))
+        true_mean = np.mean(self.y_true[0, :])
+        lower = np.sum(np.square(self.y_true[0, :] - true_mean))
 
-        r_2 = (covariance_y[0, 1])**2 / (variance_input * variance_model)
+        r_2 = 1 - (upper / lower)
 
         return r_2
 
@@ -238,20 +238,23 @@ training_data = "/home/a24nitta/work/measurements/data/data_2025january16/" \
 test_data = "/home/a24nitta/work/measurements/data/data_2025january16/" \
             "sensor_voltage_2025january16_9_memcheck.xlsx"
 
-for k in range(1, 30):
-    test = Physical_reservoir(training_data, test_data, delay=k)
-    Wout = test.train()
-    test.test(False)
-    det_coff = test.determination_coefficient()
-    print(det_coff)
-    if k == 1:
-        det_coff_series = np.zeros(1)
-        det_coff_series[0] = det_coff
-    else:
-        det_coff_series = np.hstack((det_coff_series, det_coff))
-    # test.show_result()
+test = Physical_reservoir(training_data, test_data, delay=30)
+Wout = test.train()
+test.test(False)
+test.show_result()
+# for k in range(1, 30):
+#     test = Physical_reservoir(training_data, test_data, delay=k)
+#     Wout = test.train()
+#     test.test(False)
+#     det_coff = test.determination_coefficient()
+#     print(det_coff)
+#     if k == 1:
+#         det_coff_series = np.zeros(1)
+#         det_coff_series[0] = det_coff
+#     else:
+#         det_coff_series = np.hstack((det_coff_series, det_coff))
 
-fig = plt.figure(figsize=(10, 6))
-plt.stem(det_coff_series)
-plt.tight_layout()
-plt.show()
+# fig = plt.figure(figsize=(10, 6))
+# plt.stem(det_coff_series)
+# plt.tight_layout()
+# plt.show()
