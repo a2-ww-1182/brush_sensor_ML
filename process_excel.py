@@ -36,6 +36,78 @@ class Process_excel(object):
 
         return u, y
 
+    def process_excel_files_16CH(self, excel_data):
+        t = list()
+        for row in excel_data.values:
+            t.append([row[0]])
+
+        inSize = 16
+        outSize = 1
+        u = np.zeros((inSize, len(t)))
+        y = np.zeros((outSize, len(t)))
+
+        for i, row in enumerate(excel_data.values):
+            u[0, i] = row[1]
+            u[1, i] = row[2]
+            u[2, i] = row[3]
+            u[3, i] = row[4]
+            u[4, i] = row[5]
+            u[5, i] = row[6]
+            u[6, i] = row[7]
+            u[7, i] = row[8]
+            u[8, i] = row[9]
+            u[9, i] = row[10]
+            u[10, i] = row[11]
+            u[11, i] = row[12]
+            u[12, i] = row[13]
+            u[13, i] = row[14]
+            u[14, i] = row[15]
+            u[15, i] = row[16]
+
+            y[0, i] = row[18]
+
+        return u, y
+
+    def process_excel_files_24CH(self, excel_data):
+        t = list()
+        for row in excel_data.values:
+            t.append([row[0]])
+
+        inSize = 24
+        outSize = 1
+        u = np.zeros((inSize, len(t)))
+        y = np.zeros((outSize, len(t)))
+
+        for i, row in enumerate(excel_data.values):
+            u[0, i] = row[1]
+            u[1, i] = row[2]
+            u[2, i] = row[3]
+            u[3, i] = row[4]
+            u[4, i] = row[5]
+            u[5, i] = row[6]
+            u[6, i] = row[7]
+            u[7, i] = row[8]
+            u[8, i] = row[9]
+            u[9, i] = row[10]
+            u[10, i] = row[11]
+            u[11, i] = row[12]
+            u[12, i] = row[13]
+            u[13, i] = row[14]
+            u[14, i] = row[15]
+            u[15, i] = row[16]
+            u[16, i] = row[17]
+            u[17, i] = row[18]
+            u[18, i] = row[19]
+            u[19, i] = row[20]
+            u[20, i] = row[21]
+            u[21, i] = row[22]
+            u[22, i] = row[23]
+            u[23, i] = row[24]
+
+            y[0, i] = row[26]
+
+        return u, y
+
     def process_excel_files_36CH(self, excel_data):
         t = list()
         for row in excel_data.values:
@@ -95,7 +167,7 @@ class Process_excel(object):
 
         if noise_flag is True:
             noise_shape = np.shape(u1)
-            np.random.seed(1000)
+            # np.random.seed(1000)
             noise = np.random.normal(loc=0,
                                      scale=300, size=noise_shape)
             u1 = u1 + noise
@@ -217,7 +289,7 @@ class Process_excel(object):
                         break
                     elif loop_cnt == 130:
                         break
-                    elif u[9, batch_end] < -1.0:
+                    elif u[9, batch_end] < 0:
                         break
                     else:
                         u_next[0, :, :] = u[:, batch_start:batch_end:10]
@@ -226,6 +298,150 @@ class Process_excel(object):
                         y_tdm = np.hstack((y_tdm, y_next))
 
             pre_val1 = val1
+
+        return u_tdm, y_tdm
+
+    def collect_one_cycle_12CH(self, u, y):
+        inSize = 12
+        outSize = 1
+        batchSize = 100
+        u_tdm = np.zeros((1, inSize, batchSize))
+        y_tdm = np.zeros((outSize, 1))
+        u_next = np.zeros((1, inSize, batchSize))
+        y_next = np.zeros((outSize, 1))
+
+        first_response_flag = True
+        list_of_start = []
+        loop_cnt = 0
+        for i in range(int(len(u[0, :]))):
+            if i == 0:
+                pre_val = u[9, i]
+                continue
+            val = u[9, i]
+
+            if val > 0 and pre_val < 0:
+                if first_response_flag is True:
+                    list_of_start.append(i)
+                    first_response_flag = False
+                    batch_start = i - 3
+                    batch_end = batch_start + batchSize
+                    u_tdm[0, :, :] = u[:, batch_start:batch_end]
+                    y_tdm[0, 0] = y[0, batch_start + 49]
+
+            if first_response_flag is False and i == list_of_start[-1] + 86:
+                loop_cnt += 1
+                list_of_start.append(i)
+                batch_start = i - 3
+                batch_end = batch_start + batchSize
+                if batch_end >= int(len(u[0, :])):
+                    break
+                elif loop_cnt == 130:
+                    break
+                elif u[9, batch_end] < 0:
+                    break
+                else:
+                    u_next[0, :, :] = u[:, batch_start:batch_end]
+                    y_next[0, 0] = y[0, batch_start + 49]
+                    u_tdm = np.vstack((u_tdm, u_next))
+                    y_tdm = np.hstack((y_tdm, y_next))
+
+            pre_val = val
+
+        return u_tdm, y_tdm
+
+    def collect_one_cycle_16CH(self, u, y):
+        inSize = 16
+        outSize = 1
+        batchSize = 100
+        u_tdm = np.zeros((1, inSize, batchSize))
+        y_tdm = np.zeros((outSize, 1))
+        u_next = np.zeros((1, inSize, batchSize))
+        y_next = np.zeros((outSize, 1))
+
+        first_response_flag = True
+        list_of_start = []
+        loop_cnt = 0
+        for i in range(int(len(u[0, :]))):
+            if i == 0:
+                pre_val = u[9, i]
+                continue
+            val = u[9, i]
+
+            if val > 0 and pre_val < 0:
+                if first_response_flag is True:
+                    list_of_start.append(i)
+                    first_response_flag = False
+                    batch_start = i - 3
+                    batch_end = batch_start + batchSize
+                    u_tdm[0, :, :] = u[:, batch_start:batch_end]
+                    y_tdm[0, 0] = y[0, batch_start + 49]
+
+            if first_response_flag is False and i == list_of_start[-1] + 86:
+                loop_cnt += 1
+                list_of_start.append(i)
+                batch_start = i - 3
+                batch_end = batch_start + batchSize
+                if batch_end >= int(len(u[0, :])):
+                    break
+                elif loop_cnt == 130:
+                    break
+                elif u[9, batch_end] < 0:
+                    break
+                else:
+                    u_next[0, :, :] = u[:, batch_start:batch_end]
+                    y_next[0, 0] = y[0, batch_start + 49]
+                    u_tdm = np.vstack((u_tdm, u_next))
+                    y_tdm = np.hstack((y_tdm, y_next))
+
+            pre_val = val
+
+        return u_tdm, y_tdm
+
+    def collect_one_cycle_24CH(self, u, y):
+        inSize = 24
+        outSize = 1
+        batchSize = 100
+        u_tdm = np.zeros((1, inSize, batchSize))
+        y_tdm = np.zeros((outSize, 1))
+        u_next = np.zeros((1, inSize, batchSize))
+        y_next = np.zeros((outSize, 1))
+
+        first_response_flag = True
+        list_of_start = []
+        loop_cnt = 0
+        for i in range(int(len(u[0, :]))):
+            if i == 0:
+                pre_val = u[17, i]
+                continue
+            val = u[17, i]
+
+            if val > 0 and pre_val < 0:
+                if first_response_flag is True:
+                    list_of_start.append(i)
+                    first_response_flag = False
+                    batch_start = i - 3
+                    batch_end = batch_start + batchSize
+                    u_tdm[0, :, :] = u[:, batch_start:batch_end]
+                    y_tdm[0, 0] = y[0, batch_start + 49]
+
+            if first_response_flag is False and i == list_of_start[-1] + 86:
+                loop_cnt += 1
+                list_of_start.append(i)
+                batch_start = i - 3
+                batch_end = batch_start + batchSize
+                if batch_end >= int(len(u[0, :])):
+                    break
+                elif loop_cnt == 130:
+                    break
+                elif u[17, batch_end] < 0:
+                    break
+                else:
+                    u_next[0, :, :] = u[:, batch_start:batch_end]
+                    y_next[0, 0] = y[0, batch_start + 49]
+                    u_tdm = np.vstack((u_tdm, u_next))
+                    y_tdm = np.hstack((y_tdm, y_next))
+
+            pre_val = val
 
         return u_tdm, y_tdm
 
@@ -325,6 +541,74 @@ class Process_excel(object):
 
         return u_avg, y_tdm
 
+    def collect_36CH_avg_eachdiv(self, u, y):
+        inSize = 360
+        outSize = 1
+        batchSize = 100
+        u_avg = np.zeros((1, inSize, 1))
+        y_tdm = np.zeros((outSize, 1))
+        u_next = np.zeros((1, inSize, 1))
+        y_next = np.zeros((outSize, 1))
+
+        first_response_flag = True
+        list_of_start = []
+        loop_cnt = 0
+        for i in range(int(len(u[0, :]))):
+            if i == 0:
+                pre_val = u[29, i]
+                continue
+            val = u[29, i]
+
+            if val > 0 and pre_val < 0:
+                if first_response_flag is True:
+                    list_of_start.append(i)
+                    first_response_flag = False
+                    batch_start = i - 3
+                    batch_end = batch_start + batchSize
+                    u_div1 = np.mean(u[:, batch_start:batch_start+10], axis=1).reshape((36, 1))
+                    u_div2 = np.mean(u[:, batch_start+10:batch_start+20], axis=1).reshape((36, 1))
+                    u_div3 = np.mean(u[:, batch_start+20:batch_start+30], axis=1).reshape((36, 1))
+                    u_div4 = np.mean(u[:, batch_start+30:batch_start+40], axis=1).reshape((36, 1))
+                    u_div5 = np.mean(u[:, batch_start+40:batch_start+50], axis=1).reshape((36, 1))
+                    u_div6 = np.mean(u[:, batch_start+50:batch_start+60], axis=1).reshape((36, 1))
+                    u_div7 = np.mean(u[:, batch_start+60:batch_start+70], axis=1).reshape((36, 1))
+                    u_div8 = np.mean(u[:, batch_start+70:batch_start+80], axis=1).reshape((36, 1))
+                    u_div9 = np.mean(u[:, batch_start+80:batch_start+90], axis=1).reshape((36, 1))
+                    u_div10 = np.mean(u[:, batch_start+90:batch_start+100], axis=1).reshape((36, 1))
+                    u_avg[0, :, :] = np.vstack((u_div1, u_div2, u_div3, u_div4, u_div5, u_div6, u_div7, u_div8, u_div9, u_div10))
+                    y_tdm[0, 0] = y[0, batch_start + 49]
+
+            if first_response_flag is False and i == list_of_start[-1] + 86:
+                loop_cnt += 1
+                list_of_start.append(i)
+                batch_start = i - 3
+                batch_end = batch_start + batchSize
+                if batch_end >= int(len(u[0, :])):
+                    break
+                elif loop_cnt == 130:
+                    break
+                elif u[29, batch_end] < 0:
+                    break
+                else:
+                    u_div1 = np.mean(u[:, batch_start:batch_start+10], axis=1).reshape((36, 1))
+                    u_div2 = np.mean(u[:, batch_start+10:batch_start+20], axis=1).reshape((36, 1))
+                    u_div3 = np.mean(u[:, batch_start+20:batch_start+30], axis=1).reshape((36, 1))
+                    u_div4 = np.mean(u[:, batch_start+30:batch_start+40], axis=1).reshape((36, 1))
+                    u_div5 = np.mean(u[:, batch_start+40:batch_start+50], axis=1).reshape((36, 1))
+                    u_div6 = np.mean(u[:, batch_start+50:batch_start+60], axis=1).reshape((36, 1))
+                    u_div7 = np.mean(u[:, batch_start+60:batch_start+70], axis=1).reshape((36, 1))
+                    u_div8 = np.mean(u[:, batch_start+70:batch_start+80], axis=1).reshape((36, 1))
+                    u_div9 = np.mean(u[:, batch_start+80:batch_start+90], axis=1).reshape((36, 1))
+                    u_div10 = np.mean(u[:, batch_start+90:batch_start+100], axis=1).reshape((36, 1))
+                    u_next[0, :, :] = np.vstack((u_div1, u_div2, u_div3, u_div4, u_div5, u_div6, u_div7, u_div8, u_div9, u_div10))
+                    y_next[0, 0] = y[0, batch_start + 49]
+                    u_avg = np.vstack((u_avg, u_next))
+                    y_tdm = np.hstack((y_tdm, y_next))
+
+            pre_val = val
+
+        return u_avg, y_tdm
+
     def combine_data(self, dir_name, list_ofnum, cycle_flag, k):
         """dir_name: directory of files
            list_ofnum: list of file number
@@ -381,12 +665,12 @@ class Process_excel(object):
                     u, y = self.process_excel_files_36CH(excel_data)
                     u_scaled, y_scaled = self.preprocess(u, y, noise_flag)
                     if j == 0 and i == 1:
-                        u_tmp, y_tmp = self.collect_36CH_avg(u_scaled, y_scaled)
+                        u_tmp, y_tmp = self.collect_36CH_avg_eachdiv(u_scaled, y_scaled)
                         y_len = y_tmp.shape[1]
                         u1 = u_tmp[self.delay:, :, :]
                         y1 = y_tmp[:, self.delay-k:y_len-k]
                     else:
-                        u_tmp, y_tmp = self.collect_36CH_avg(u_scaled, y_scaled)
+                        u_tmp, y_tmp = self.collect_36CH_avg_eachdiv(u_scaled, y_scaled)
                         y_len = y_tmp.shape[1]
                         u_tmp = u_tmp[self.delay:, :, :]
                         y_tmp = y_tmp[:, self.delay-k:y_len-k]
@@ -399,12 +683,12 @@ class Process_excel(object):
                 u, y = self.process_excel_files_36CH(excel_data)
                 u_scaled, y_scaled = self.preprocess(u, y, noise_flag=False)
                 if i == 81:
-                    u_tmp, y_tmp = self.collect_36CH_avg(u_scaled, y_scaled)
+                    u_tmp, y_tmp = self.collect_36CH_avg_eachdiv(u_scaled, y_scaled)
                     y_len = y_tmp.shape[1]
                     u1 = u_tmp[self.delay:, :, :]
                     y1 = y_tmp[:, self.delay-k:y_len-k]
                 else:
-                    u_tmp, y_tmp = self.collect_36CH_avg(u_scaled, y_scaled)
+                    u_tmp, y_tmp = self.collect_36CH_avg_eachdiv(u_scaled, y_scaled)
                     y_len = y_tmp.shape[1]
                     u_tmp = u_tmp[self.delay:, :, :]
                     y_tmp = y_tmp[:, self.delay-k:y_len-k]
