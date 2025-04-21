@@ -541,8 +541,20 @@ class Process_excel(object):
 
         return u_avg, y_tdm
 
-    def collect_36CH_avg_eachdiv(self, u, y):
-        inSize = 360
+    def collect_avg_eachdiv(self, u, y):
+        channel_size = u.shape[0]
+
+        match channel_size:
+            case 36:
+                ref = 29
+            case 24:
+                ref = 17
+            case 16:
+                ref = 9
+            case 12:
+                ref = 9
+
+        inSize = channel_size * 10
         outSize = 1
         batchSize = 100
         u_avg = np.zeros((1, inSize, 1))
@@ -555,9 +567,9 @@ class Process_excel(object):
         loop_cnt = 0
         for i in range(int(len(u[0, :]))):
             if i == 0:
-                pre_val = u[29, i]
+                pre_val = u[ref, i]
                 continue
-            val = u[29, i]
+            val = u[ref, i]
 
             if val > 0 and pre_val < 0:
                 if first_response_flag is True:
@@ -565,16 +577,16 @@ class Process_excel(object):
                     first_response_flag = False
                     batch_start = i - 3
                     batch_end = batch_start + batchSize
-                    u_div1 = np.mean(u[:, batch_start:batch_start+10], axis=1).reshape((36, 1))
-                    u_div2 = np.mean(u[:, batch_start+10:batch_start+20], axis=1).reshape((36, 1))
-                    u_div3 = np.mean(u[:, batch_start+20:batch_start+30], axis=1).reshape((36, 1))
-                    u_div4 = np.mean(u[:, batch_start+30:batch_start+40], axis=1).reshape((36, 1))
-                    u_div5 = np.mean(u[:, batch_start+40:batch_start+50], axis=1).reshape((36, 1))
-                    u_div6 = np.mean(u[:, batch_start+50:batch_start+60], axis=1).reshape((36, 1))
-                    u_div7 = np.mean(u[:, batch_start+60:batch_start+70], axis=1).reshape((36, 1))
-                    u_div8 = np.mean(u[:, batch_start+70:batch_start+80], axis=1).reshape((36, 1))
-                    u_div9 = np.mean(u[:, batch_start+80:batch_start+90], axis=1).reshape((36, 1))
-                    u_div10 = np.mean(u[:, batch_start+90:batch_start+100], axis=1).reshape((36, 1))
+                    u_div1 = np.mean(u[:, batch_start:batch_start+10], axis=1).reshape((channel_size, 1))
+                    u_div2 = np.mean(u[:, batch_start+10:batch_start+20], axis=1).reshape((channel_size, 1))
+                    u_div3 = np.mean(u[:, batch_start+20:batch_start+30], axis=1).reshape((channel_size, 1))
+                    u_div4 = np.mean(u[:, batch_start+30:batch_start+40], axis=1).reshape((channel_size, 1))
+                    u_div5 = np.mean(u[:, batch_start+40:batch_start+50], axis=1).reshape((channel_size, 1))
+                    u_div6 = np.mean(u[:, batch_start+50:batch_start+60], axis=1).reshape((channel_size, 1))
+                    u_div7 = np.mean(u[:, batch_start+60:batch_start+70], axis=1).reshape((channel_size, 1))
+                    u_div8 = np.mean(u[:, batch_start+70:batch_start+80], axis=1).reshape((channel_size, 1))
+                    u_div9 = np.mean(u[:, batch_start+80:batch_start+90], axis=1).reshape((channel_size, 1))
+                    u_div10 = np.mean(u[:, batch_start+90:batch_start+100], axis=1).reshape((channel_size, 1))
                     u_avg[0, :, :] = np.vstack((u_div1, u_div2, u_div3, u_div4, u_div5, u_div6, u_div7, u_div8, u_div9, u_div10))
                     y_tdm[0, 0] = y[0, batch_start + 49]
 
@@ -587,19 +599,19 @@ class Process_excel(object):
                     break
                 elif loop_cnt == 130:
                     break
-                elif u[29, batch_end] < 0:
+                elif u[ref, batch_end] < 0:
                     break
                 else:
-                    u_div1 = np.mean(u[:, batch_start:batch_start+10], axis=1).reshape((36, 1))
-                    u_div2 = np.mean(u[:, batch_start+10:batch_start+20], axis=1).reshape((36, 1))
-                    u_div3 = np.mean(u[:, batch_start+20:batch_start+30], axis=1).reshape((36, 1))
-                    u_div4 = np.mean(u[:, batch_start+30:batch_start+40], axis=1).reshape((36, 1))
-                    u_div5 = np.mean(u[:, batch_start+40:batch_start+50], axis=1).reshape((36, 1))
-                    u_div6 = np.mean(u[:, batch_start+50:batch_start+60], axis=1).reshape((36, 1))
-                    u_div7 = np.mean(u[:, batch_start+60:batch_start+70], axis=1).reshape((36, 1))
-                    u_div8 = np.mean(u[:, batch_start+70:batch_start+80], axis=1).reshape((36, 1))
-                    u_div9 = np.mean(u[:, batch_start+80:batch_start+90], axis=1).reshape((36, 1))
-                    u_div10 = np.mean(u[:, batch_start+90:batch_start+100], axis=1).reshape((36, 1))
+                    u_div1 = np.mean(u[:, batch_start:batch_start+10], axis=1).reshape((channel_size, 1))
+                    u_div2 = np.mean(u[:, batch_start+10:batch_start+20], axis=1).reshape((channel_size, 1))
+                    u_div3 = np.mean(u[:, batch_start+20:batch_start+30], axis=1).reshape((channel_size, 1))
+                    u_div4 = np.mean(u[:, batch_start+30:batch_start+40], axis=1).reshape((channel_size, 1))
+                    u_div5 = np.mean(u[:, batch_start+40:batch_start+50], axis=1).reshape((channel_size, 1))
+                    u_div6 = np.mean(u[:, batch_start+50:batch_start+60], axis=1).reshape((channel_size, 1))
+                    u_div7 = np.mean(u[:, batch_start+60:batch_start+70], axis=1).reshape((channel_size, 1))
+                    u_div8 = np.mean(u[:, batch_start+70:batch_start+80], axis=1).reshape((channel_size, 1))
+                    u_div9 = np.mean(u[:, batch_start+80:batch_start+90], axis=1).reshape((channel_size, 1))
+                    u_div10 = np.mean(u[:, batch_start+90:batch_start+100], axis=1).reshape((channel_size, 1))
                     u_next[0, :, :] = np.vstack((u_div1, u_div2, u_div3, u_div4, u_div5, u_div6, u_div7, u_div8, u_div9, u_div10))
                     y_next[0, 0] = y[0, batch_start + 49]
                     u_avg = np.vstack((u_avg, u_next))
@@ -654,7 +666,7 @@ class Process_excel(object):
 
     def combine_data_augment(self, dir_name, list_of_num, train_flag, k):
         if train_flag is True:
-            for j in range(0, 10):
+            for j in range(0, 1):
                 if j == 0:
                     noise_flag = False
                 else:
@@ -665,12 +677,12 @@ class Process_excel(object):
                     u, y = self.process_excel_files_36CH(excel_data)
                     u_scaled, y_scaled = self.preprocess(u, y, noise_flag)
                     if j == 0 and i == 1:
-                        u_tmp, y_tmp = self.collect_36CH_avg_eachdiv(u_scaled, y_scaled)
+                        u_tmp, y_tmp = self.collect_avg_eachdiv(u_scaled, y_scaled)
                         y_len = y_tmp.shape[1]
                         u1 = u_tmp[self.delay:, :, :]
                         y1 = y_tmp[:, self.delay-k:y_len-k]
                     else:
-                        u_tmp, y_tmp = self.collect_36CH_avg_eachdiv(u_scaled, y_scaled)
+                        u_tmp, y_tmp = self.collect_avg_eachdiv(u_scaled, y_scaled)
                         y_len = y_tmp.shape[1]
                         u_tmp = u_tmp[self.delay:, :, :]
                         y_tmp = y_tmp[:, self.delay-k:y_len-k]
@@ -682,13 +694,13 @@ class Process_excel(object):
                 excel_data = pd.read_excel(excel_file)
                 u, y = self.process_excel_files_36CH(excel_data)
                 u_scaled, y_scaled = self.preprocess(u, y, noise_flag=False)
-                if i == 81:
-                    u_tmp, y_tmp = self.collect_36CH_avg_eachdiv(u_scaled, y_scaled)
+                if i == 24:
+                    u_tmp, y_tmp = self.collect_avg_eachdiv(u_scaled, y_scaled)
                     y_len = y_tmp.shape[1]
                     u1 = u_tmp[self.delay:, :, :]
                     y1 = y_tmp[:, self.delay-k:y_len-k]
                 else:
-                    u_tmp, y_tmp = self.collect_36CH_avg_eachdiv(u_scaled, y_scaled)
+                    u_tmp, y_tmp = self.collect_avg_eachdiv(u_scaled, y_scaled)
                     y_len = y_tmp.shape[1]
                     u_tmp = u_tmp[self.delay:, :, :]
                     y_tmp = y_tmp[:, self.delay-k:y_len-k]
