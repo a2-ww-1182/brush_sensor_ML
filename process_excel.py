@@ -621,49 +621,6 @@ class Process_excel(object):
 
         return u_avg, y_tdm
 
-    def combine_data(self, dir_name, list_ofnum, cycle_flag, k):
-        """dir_name: directory of files
-           list_ofnum: list of file number
-           cycle flag: True=one, False=half
-           k: delay"""
-
-        first_file_flag = True
-        for i in list_ofnum:
-            excel_file = dir_name + "sensor_voltage_2025march28_{0}_column2.xlsx".format(i)
-            excel_data = pd.read_excel(excel_file)
-            u, y = self.process_excel_files(excel_data)
-            u_scaled, y_scaled = self.preprocess(u, y)
-            if cycle_flag is True:
-                if first_file_flag is True:
-                    u_tmp, y_tmp = self.collect_one_cycle(u_scaled, y_scaled)
-                    y_len = y_tmp.shape[1]
-                    u1 = u_tmp[self.delay:, :, :]
-                    y1 = y_tmp[:, self.delay-k:y_len-k]
-                    first_file_flag = False
-                else:
-                    u_tmp, y_tmp = self.collect_one_cycle(u_scaled, y_scaled)
-                    y_len = y_tmp.shape[1]
-                    u_tmp = u_tmp[self.delay:, :, :]
-                    y_tmp = y_tmp[:, self.delay-k:y_len-k]
-                    u1 = np.vstack((u1, u_tmp))
-                    y1 = np.hstack((y1, y_tmp))
-            else:
-                if first_file_flag is True:
-                    u_tmp, y_tmp = self.collect_half_cycle(u_scaled, y_scaled)
-                    y_len = y_tmp.shape[1]
-                    u_tmp = u_tmp[self.delay:, :, :]
-                    y_tmp = y_tmp[:, self.delay-k:y_len-k]
-                    first_file_flag = False
-                else:
-                    u_tmp, y_tmp = self.collect_half_cycle(u_scaled, y_scaled)
-                    y_len = y_tmp.shape[1]
-                    u_tmp = u_tmp[self.delay:, :, :]
-                    y_tmp = y_tmp[:, self.delay-k:y_len-k]
-                    u1 = np.vstack((u1, u_tmp))
-                    y1 = np.hstack((y1, y_tmp))
-
-        return u1, y1
-
     def combine_data_augment(self, dir_name, list_of_num, train_flag, k):
         if train_flag is True:
             for j in range(0, 1):
