@@ -2,6 +2,8 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import glob
+import os
 
 
 class Process_excel(object):
@@ -621,19 +623,18 @@ class Process_excel(object):
 
         return u_avg, y_tdm
 
-    def combine_data_augment(self, dir_name, list_of_num, train_flag, k):
+    def combine_data_augment(self, file_list, train_flag, k):
         if train_flag is True:
             for j in range(0, 1):
                 if j == 0:
                     noise_flag = False
                 else:
                     noise_flag = True
-                for i in list_of_num:
-                    excel_file = dir_name + "sensor_voltage_2025march28_{0}_all_brushes.xlsx".format(i)
-                    excel_data = pd.read_excel(excel_file)
+                for index, file in enumerate(file_list):
+                    excel_data = pd.read_excel(file)
                     u, y = self.process_excel_files_36CH(excel_data)
                     u_scaled, y_scaled = self.preprocess(u, y, noise_flag)
-                    if j == 0 and i == 1:
+                    if j == 0 and index == 0:
                         u_tmp, y_tmp = self.collect_avg_eachdiv(u_scaled, y_scaled)
                         y_len = y_tmp.shape[1]
                         u1 = u_tmp[self.delay:, :, :]
@@ -646,12 +647,11 @@ class Process_excel(object):
                         u1 = np.vstack((u1, u_tmp))
                         y1 = np.hstack((y1, y_tmp))
         else:
-            for i in list_of_num:
-                excel_file = dir_name + "sensor_voltage_2025march28_{0}_all_brushes.xlsx".format(i)
-                excel_data = pd.read_excel(excel_file)
+            for index, file in enumerate(file_list):
+                excel_data = pd.read_excel(file)
                 u, y = self.process_excel_files_36CH(excel_data)
                 u_scaled, y_scaled = self.preprocess(u, y, noise_flag=False)
-                if i == 24:
+                if index == 0:
                     u_tmp, y_tmp = self.collect_avg_eachdiv(u_scaled, y_scaled)
                     y_len = y_tmp.shape[1]
                     u1 = u_tmp[self.delay:, :, :]
@@ -670,11 +670,12 @@ class Process_excel(object):
 # 検証用コード
 if __name__ == '__main__':
     dir_name = "/home/a24nitta/work/measurements/data/data_2025march28/"
-    list_of_num = list(range(1, 81))
+    file_list = glob.glob(os.path.join(dir_name, '*all_brushes.xlsx'))
+    print(file_list)
     test = Process_excel(delay=0)
     cycle_flag = True  # One cycle: True, Half cycle: False
     u_train, y_train = \
-        test.combine_data_augment(dir_name=dir_name, list_of_num=list_of_num,
+        test.combine_data_augment(file_list=file_list,
                                   train_flag=True, k=0)
 
     print(u_train.shape)
